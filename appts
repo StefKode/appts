@@ -1,0 +1,486 @@
+#!/bin/bash
+
+install="$(dirname $(readlink -f $0))"
+echo $install
+
+cmd=""
+dir=""
+extport=""
+intport=""
+name=""
+hint=""
+listarchive=""
+ahost=""
+n=0
+user=pi
+host=dax
+connection="$user@$host"
+host="$(echo $connection | sed -e 's/^.*@//')"
+
+quiet=0
+
+function execute {
+    ssh $connection sudo /var/lib/lxc/bin/appmgr $1 $2 $3 $4 $5
+}
+
+while [ "$1" != "" ];
+do
+    case "$1" in
+        #opt/ -connect / user@host / use specified connection insted of default
+        "-connect")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            shift
+            if [ "$1" = "" ]; then
+                echo "need connection"
+                exit 1
+            fi
+            connection="$1"
+            host="$(echo $connection | sed -e 's/^.*@//')"
+            user="$(echo $connection | sed -e 's/@.*$//')"
+            n=-1
+            ;;
+            #--------------------------
+        #opt/ -dir / directory / deploy from specified directory
+        "-dir")
+            if [ $n -eq 0 ]; then
+                echo "command missing"
+                exit 1
+            fi
+            shift
+            if [ ! -d "$1" ]; then
+                echo "dir not found"
+                exit 1
+            fi
+            dir="$1"
+            ;;
+            #--------------------------
+        #opt/ -eport / portnum / route from guest port (requires -iport)
+        "-eport")
+            if [ $n -eq 0 ]; then
+                echo "command missing"
+                exit 1
+            fi
+            shift
+            if [ "$1" = "" ]; then
+                echo "need port"
+                exit 1
+            fi
+            extport="$1"
+            ;;
+            #--------------------------
+        #opt/ -iport / portnum / route to container port (requires -eport)
+        "-iport")
+            if [ $n -eq 0 ]; then
+                echo "command missing"
+                exit 1
+            fi
+            shift
+            if [ "$1" = "" ]; then
+                echo "need port"
+                exit 1
+            fi
+            intport="$1"
+            ;;
+            #--------------------------
+        #opt/ -name / name / name of the app to create
+        "-name")
+            if [ $n -eq 0 ]; then
+                echo "command missing"
+                exit 1
+            fi
+            shift
+            if [ "$1" = "" ]; then
+                echo "need string"
+                exit 1
+            fi
+            name="$1"
+            ;;
+            #--------------------------
+        #cmd/ -l /  / list all available apps
+        "-l")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            cmd="list"
+            ;;
+            #--------------------------
+        #opt/ -a /  / include archive in app listing
+        "-a")
+            listarchive="archive"
+            ;;
+            #--------------------------
+        #cmd/ -lxc /  / list all lxc containers and their state
+        "-lxc")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            shift 
+            if [ "$1" != "" ]; then
+                echo "this command takes no arguments"
+                exit 1
+            fi
+            echo "($connection)"
+            execute lxc
+            echo ""
+            exit 0
+            ;;
+            #--------------------------
+        #cmd/ -deploy / appID / deploy dir to app (-dir)
+        "-deploy")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            shift
+            appID=$1
+            cmd="deploy"
+            ;;
+            #--------------------------
+        #cmd/ -del / appID / delete specified app
+        "-del")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            shift
+            appID=$1
+            cmd="delete"
+            ;;
+            #--------------------------
+        #cmd/ -start / appID / start specified app
+        "-start")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            shift
+            appID=$1
+            cmd="start"
+            ;;
+            #--------------------------
+        #cmd/ -restart / appID / restart specified app
+        "-restart")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            shift
+            appID=$1
+            cmd="restart"
+            ;;
+            #--------------------------
+        #cmd/ -stop / appID / stop specified app
+        "-stop")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            shift
+            appID=$1
+            cmd="stop"
+            ;;
+            #--------------------------
+        #cmd/ -create /  / create app (opt: -name, -eport, -iport)
+        "-create")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            cmd="create"
+            ;;
+            #--------------------------
+        #cmd/ -onestop /  / create if app not exist, then deploy (-name -dir opt: -eport -iport)
+        "-onestop")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            cmd="onestop"
+            ;;
+            #--------------------------
+        #cmd/ -listfw /  / list guest firewall configuration
+        "-listfw")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            shift
+            echo "($connection)"
+            if [ "$1" = "" ]; then
+                execute listfw
+            else
+                execute listfw $1
+            fi
+            exit
+            ;;
+            #--------------------------
+        #cmd/ -ssh / appID / ssh connect to specified app
+        "-ssh")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            shift
+            echo "($connection)"
+            appID="$1"
+            port="$(execute getport $appID)"
+            ssh -p $port app@$host
+            exit
+            ;;
+            #--------------------------
+        #cmd/ -archive / appID / archive specified app (opt: -hint)
+        "-archive")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            cmd="archive"
+            shift
+            if [ "$1" = "" ]; then
+                echo "need appID"
+                exit 1
+            fi
+            appID="$1"
+            ;;
+            #--------------------------
+        #opt/ -hint / appID / archive specified app
+        "-hint")
+            if [ $n -eq 0 ]; then
+                echo "command missing"
+                exit 1
+            fi
+            shift
+            if [ "$1" = "" ]; then
+                echo "need hint string"
+                exit 1
+            fi
+            hint="$1"
+            ;;
+            #--------------------------
+        #cmd/ -restore / archive / restore specified archive to app
+        "-restore")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            shift
+            echo "($connection)"
+            archive="$1"
+            execute restore "$archive"
+            exit
+            ;;
+            #--------------------------
+        #cmd/ -ansible / appID / get ansible host string for app (-ahost)
+        "-ansible")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            shift
+            appID="$1"
+            if [ "$appID" = "" ]; then
+               echo "need appID"
+               exit 1
+            fi 
+            cmd="ansible"
+            quiet=1
+            ;;
+            #--------------------------
+        #cmd/ -ahost / appID / set ansible hostname
+        "-ahost")
+            shift
+            ahost="$1"
+            ;;
+            #--------------------------
+        #cmd/ -h / / print this help
+        "-h")
+            echo "Commands:"
+            echo "appID = appID of app (app-NM)"
+            echo "-l .................. : list available apps"
+            echo "-lxc ................ : lxc container status"
+            echo "-start   appID ...... : start app"
+            echo "-stop    appID ...... : stop app"
+            echo "-del     appID ...... : delete app"
+            echo "-deploy  appID ...... : deploy dir to app (-dir opt: -eport -iport)"
+            echo "-create ............. : create app (opt: -name -eport -iport)"
+            echo "-onestop ............ : create if app not existing, deploy and restart"
+            echo "                            (-name -dir opt: -eport -iport)"
+            echo "-listfw ............. : list firewall configuration"
+            echo "-ssh     appID ....... : ssh-connect to <appID>"
+            echo "-archive appID ....... : move app to ARCHIVE (opt: -hint)"
+            echo "-restore archive_name : restore archive"
+            echo "-connect user@host .. : use non-default connection"
+            echo "-ansible appID ....... : get host string for ansible (-ahost)"
+            echo ""
+            echo "Arguments:"
+            echo "-dir    : deploy source directory"
+            echo "-eport  : external visible port"
+            echo "-iport  : mapped interal port in app"
+            echo "-name   : nameription of app (no spaces)"
+            echo "-a      : include archives in list"
+            echo "-hint   : specify short string hint for archive"
+            echo "-ahost  : hostname to use for ansible host string"
+            echo ""
+            exit
+            ;;
+            #--------------------------
+        *)
+            echo "unknown command: $1"
+            exit 1
+            ;;
+            #--------------------------
+    esac
+    shift
+    let n++
+done
+
+if [ "$cmd" = "" ]; then
+    $0 -h
+    exit
+fi
+
+if [ $quiet -eq 0 ]; then
+    echo "APPTheShelf v1.0, ($connection)"
+fi
+
+###########################################################################
+if [ "$cmd" = "deploy" ]; then
+    if [ ! -d "$dir" ]; then
+        echo "Error: dir not found"
+        exit 1
+    fi
+    if [ ! -x "appstart.sh" ]; then
+        echo "Error: apptart not found"
+        exit 1
+    fi
+    if [ "$appID" = "" ]; then
+        echo "need appID"
+        exit 1
+    fi
+    echo "delete.."
+    execute delete-app-contents $appID
+    port="$(execute getport $appID)"
+    echo "use port $port"
+    scp -P $port -r * app@$host:code
+
+    if [ -e deploy.hook ]; then
+        cat deploy.hook | while read line;
+        do
+            src=$(echo $line | awk '{print $1}')
+            dst=$(echo $line | awk '{print $2}')
+            scp -P $port "$src" app@$host:"$dst"
+        done
+    fi
+
+    execute restart $appID
+    echo "done"
+    echo ""
+    exit
+fi
+
+###########################################################################
+if [ "$cmd" = "delete" ]; then
+    if [ "$appID" = "" ]; then
+        echo "need appID"
+        exit 1
+    fi
+    read -p "Delete $appID? (Y=Enter, N=Ctrl-C) " ans
+    execute delete $appID
+    echo ""
+    exit
+fi
+
+###########################################################################
+if [ "$cmd" = "start" ]; then
+    if [ "$appID" = "" ]; then
+        echo "need appID"
+        exit 1
+    fi
+    echo "Start $appID"
+    execute start $appID
+    echo ""
+    exit
+fi
+
+###########################################################################
+if [ "$cmd" = "restart" ]; then
+    if [ "$appID" = "" ]; then
+        echo "need appID"
+        exit 1
+    fi
+    echo "Restart $appID"
+    execute restart $appID
+    echo ""
+    exit
+fi
+
+###########################################################################
+if [ "$cmd" = "stop" ]; then
+    if [ "$appID" = "" ]; then
+        echo "need appID"
+        exit 1
+    fi
+    echo "Stop $appID"
+    execute stop $appID
+    echo ""
+    exit
+fi
+
+###########################################################################
+if [ "$cmd" = "create" ]; then
+    echo "Create new app ($name)"
+    execute create $name $extport $intport
+    echo ""
+    exit
+fi
+
+###########################################################################
+if [ "$cmd" = "onestop" ]; then
+    if [ "$name" = "" ]; then
+        echo "need args: name extport intport dir"
+        exit 1
+    fi
+    creat=$(execute create $name $extport $intport)
+    app=$(echo $creat | awk '{print $2}' | sed -e 's/name=//')
+    echo "Created : $app"
+    $0 -deploy $app -dir "$dir"
+    execute restart $app
+    echo "Done"
+    echo ""
+    exit 0
+fi
+###########################################################################
+if [ "$cmd" = "archive" ]; then
+    echo "Archive appID=$appID"
+    if [ "$hint" != "" ]; then
+            echo "Optional hint = $hint"
+    fi
+    execute archive $appID "$hint"
+    echo ""
+    exit
+fi
+###########################################################################
+if [ "$cmd" = "list" ]; then
+    execute list $listarchive
+    exit
+fi
+###########################################################################
+if [ "$cmd" = "ansible" ]; then
+    if [ "$ahost" = "" ]; then
+        echo "need ansible hostname"
+        exit 1
+    fi
+    port="$(execute getport $appID)"
+    echo "[apps]"
+    echo "wiki ansible_port=$port ansible_host=$host"
+
+    echo ""
+    exit
+fi
+
+

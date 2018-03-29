@@ -1,0 +1,37 @@
+#!/bin/bash
+
+if [ ! -e appts ]; then
+    echo "appts not found"
+    exit 1
+fi
+
+function out()  {
+    echo "echo \"$1\""
+}
+
+out "$(cat version)"
+out ""
+out "Available Commands:"
+out "-------------------"
+
+grep '#cmd' appts | while read line;
+do
+    cmd=$(echo $line | awk -F '/' '{print $2}' | sed -e 's/^ *//' -e 's/ *$//')
+    arg=$(echo $line | awk -F '/' '{print $3}' | sed -e 's/^ *//' -e 's/ *$//')
+    txt=$(echo $line | awk -F '/' '{print $4}' | sed -e 's/^ *//' -e 's/ *$//')
+    hlt=$(printf "%-8s %-9s - %s\n" "$cmd" "$arg" "$txt")
+    out "$hlt"
+done
+
+out ""
+out "Option Specifications:"
+out "----------------------"
+grep '#opt' appts | while read line;
+do
+    cmd=$(echo $line | awk -F '/' '{print $2}' | sed -e 's/^ *//' -e 's/ *$//')
+    arg=$(echo $line | awk -F '/' '{print $3}' | sed -e 's/^ *//' -e 's/ *$//')
+    txt=$(echo $line | awk -F '/' '{print $4}' | sed -e 's/^ *//' -e 's/ *$//')
+    hlt=$(printf "%-8s %-9s - %s\n" "$cmd" "$arg" "$txt")
+    out "$hlt"
+done
+out ""
