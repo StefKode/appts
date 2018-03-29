@@ -1,7 +1,6 @@
 #!/bin/bash
 
 install="$(dirname $(readlink -f $0))"
-echo $install
 
 cmd=""
 dir=""
@@ -16,8 +15,8 @@ user=pi
 host=dax
 connection="$user@$host"
 host="$(echo $connection | sed -e 's/^.*@//')"
-
 quiet=0
+filter=""
 
 function execute {
     ssh $connection sudo /var/lib/lxc/bin/appmgr $1 $2 $3 $4 $5
@@ -124,10 +123,7 @@ do
                 echo "this command takes no arguments"
                 exit 1
             fi
-            echo "($connection)"
-            execute lxc
-            echo ""
-            exit 0
+            cmd="lxc"
             ;;
             #--------------------------
         #cmd/ -deploy / appID / deploy dir to app (-dir)
@@ -203,20 +199,15 @@ do
             cmd="onestop"
             ;;
             #--------------------------
-        #cmd/ -listfw /  / list guest firewall configuration
+        #cmd/ -listfw / opt:filter / list guest firewall configuration, optional filter
         "-listfw")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
                 exit 1
             fi
             shift
-            echo "($connection)"
-            if [ "$1" = "" ]; then
-                execute listfw
-            else
-                execute listfw $1
-            fi
-            exit
+            filter="$1"
+            cmd="listfw"
             ;;
             #--------------------------
         #cmd/ -ssh / appID / ssh connect to specified app
@@ -226,11 +217,9 @@ do
                 exit 1
             fi
             shift
-            echo "($connection)"
             appID="$1"
             port="$(execute getport $appID)"
-            ssh -p $port app@$host
-            exit
+            cmd="ssh"
             ;;
             #--------------------------
         #cmd/ -archive / appID / archive specified app (opt: -hint)
@@ -269,10 +258,8 @@ do
                 exit 1
             fi
             shift
-            echo "($connection)"
             archive="$1"
-            execute restore "$archive"
-            exit
+            cmd="restore"
             ;;
             #--------------------------
         #cmd/ -ansible / appID / get ansible host string for app (-ahost)
@@ -299,33 +286,7 @@ do
             #--------------------------
         #cmd/ -h / / print this help
         "-h")
-            echo "Commands:"
-            echo "appID = appID of app (app-NM)"
-            echo "-l .................. : list available apps"
-            echo "-lxc ................ : lxc container status"
-            echo "-start   appID ...... : start app"
-            echo "-stop    appID ...... : stop app"
-            echo "-del     appID ...... : delete app"
-            echo "-deploy  appID ...... : deploy dir to app (-dir opt: -eport -iport)"
-            echo "-create ............. : create app (opt: -name -eport -iport)"
-            echo "-onestop ............ : create if app not existing, deploy and restart"
-            echo "                            (-name -dir opt: -eport -iport)"
-            echo "-listfw ............. : list firewall configuration"
-            echo "-ssh     appID ....... : ssh-connect to <appID>"
-            echo "-archive appID ....... : move app to ARCHIVE (opt: -hint)"
-            echo "-restore archive_name : restore archive"
-            echo "-connect user@host .. : use non-default connection"
-            echo "-ansible appID ....... : get host string for ansible (-ahost)"
-            echo ""
-            echo "Arguments:"
-            echo "-dir    : deploy source directory"
-            echo "-eport  : external visible port"
-            echo "-iport  : mapped interal port in app"
-            echo "-name   : nameription of app (no spaces)"
-            echo "-a      : include archives in list"
-            echo "-hint   : specify short string hint for archive"
-            echo "-ahost  : hostname to use for ansible host string"
-            echo ""
+            "$install/showhelp"
             exit
             ;;
             #--------------------------
@@ -339,6 +300,7 @@ do
     let n++
 done
 
+###########################################################################
 if [ "$cmd" = "" ]; then
     $0 -h
     exit
@@ -346,141 +308,16 @@ fi
 
 if [ $quiet -eq 0 ]; then
     echo "APPTheShelf v1.0, ($connection)"
-fi
-
-###########################################################################
-if [ "$cmd" = "deploy" ]; then
-    if [ ! -d "$dir" ]; then
-        echo "Error: dir not found"
-        exit 1
-    fi
-    if [ ! -x "appstart.sh" ]; then
-        echo "Error: apptart not found"
-        exit 1
-    fi
-    if [ "$appID" = "" ]; then
-        echo "need appID"
-        exit 1
-    fi
-    echo "delete.."
-    execute delete-app-contents $appID
-    port="$(execute getport $appID)"
-    echo "use port $port"
-    scp -P $port -r * app@$host:code
-
-    if [ -e deploy.hook ]; then
-        cat deploy.hook | while read line;
-        do
-            src=$(echo $line | awk '{print $1}')
-            dst=$(echo $line | awk '{print $2}')
-            scp -P $port "$src" app@$host:"$dst"
-        done
-    fi
-
-    execute restart $appID
-    echo "done"
     echo ""
-    exit
 fi
 
 ###########################################################################
-if [ "$cmd" = "delete" ]; then
-    if [ "$appID" = "" ]; then
-        echo "need appID"
-        exit 1
-    fi
-    read -p "Delete $appID? (Y=Enter, N=Ctrl-C) " ans
-    execute delete $appID
-    echo ""
-    exit
+cmdfile="$install/cmd/cmd_$cmd"
+if [ ! -e "$cmdfile" ]; then
+    echo "Command not implemented"
+    exit 1
 fi
 
-###########################################################################
-if [ "$cmd" = "start" ]; then
-    if [ "$appID" = "" ]; then
-        echo "need appID"
-        exit 1
-    fi
-    echo "Start $appID"
-    execute start $appID
-    echo ""
-    exit
-fi
-
-###########################################################################
-if [ "$cmd" = "restart" ]; then
-    if [ "$appID" = "" ]; then
-        echo "need appID"
-        exit 1
-    fi
-    echo "Restart $appID"
-    execute restart $appID
-    echo ""
-    exit
-fi
-
-###########################################################################
-if [ "$cmd" = "stop" ]; then
-    if [ "$appID" = "" ]; then
-        echo "need appID"
-        exit 1
-    fi
-    echo "Stop $appID"
-    execute stop $appID
-    echo ""
-    exit
-fi
-
-###########################################################################
-if [ "$cmd" = "create" ]; then
-    echo "Create new app ($name)"
-    execute create $name $extport $intport
-    echo ""
-    exit
-fi
-
-###########################################################################
-if [ "$cmd" = "onestop" ]; then
-    if [ "$name" = "" ]; then
-        echo "need args: name extport intport dir"
-        exit 1
-    fi
-    creat=$(execute create $name $extport $intport)
-    app=$(echo $creat | awk '{print $2}' | sed -e 's/name=//')
-    echo "Created : $app"
-    $0 -deploy $app -dir "$dir"
-    execute restart $app
-    echo "Done"
-    echo ""
-    exit 0
-fi
-###########################################################################
-if [ "$cmd" = "archive" ]; then
-    echo "Archive appID=$appID"
-    if [ "$hint" != "" ]; then
-            echo "Optional hint = $hint"
-    fi
-    execute archive $appID "$hint"
-    echo ""
-    exit
-fi
-###########################################################################
-if [ "$cmd" = "list" ]; then
-    execute list $listarchive
-    exit
-fi
-###########################################################################
-if [ "$cmd" = "ansible" ]; then
-    if [ "$ahost" = "" ]; then
-        echo "need ansible hostname"
-        exit 1
-    fi
-    port="$(execute getport $appID)"
-    echo "[apps]"
-    echo "wiki ansible_port=$port ansible_host=$host"
-
-    echo ""
-    exit
-fi
-
+. $cmdfile
+echo ""
 

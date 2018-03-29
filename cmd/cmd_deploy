@@ -1,0 +1,30 @@
+#!/bin/bash
+if [ ! -d "$dir" ]; then
+    echo "Error: dir not found"
+    exit 1
+fi
+if [ ! -x "appstart.sh" ]; then
+    echo "Error: apptart not found"
+    exit 1
+fi
+if [ "$appID" = "" ]; then
+    echo "need appID"
+    exit 1
+fi
+echo "delete.."
+execute delete-app-contents $appID
+port="$(execute getport $appID)"
+echo "use port $port"
+scp -P $port -r * app@$host:code
+
+if [ -e deploy.hook ]; then
+    cat deploy.hook | while read line;
+    do
+        src=$(echo $line | awk '{print $1}')
+        dst=$(echo $line | awk '{print $2}')
+        scp -P $port "$src" app@$host:"$dst"
+    done
+fi
+
+execute restart $appID
+echo "done"

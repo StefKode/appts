@@ -1,0 +1,3 @@
+#!/bin/bash
+echo "Create new app ($name)"
+execute create $name $extport $intport

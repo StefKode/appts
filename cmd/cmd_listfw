@@ -1,0 +1,6 @@
+#!/bin/bash
+if [ "$filter" = "" ]; then
+    execute listfw
+else
+    execute listfw $filter
+fi

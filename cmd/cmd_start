@@ -1,0 +1,7 @@
+#!/bin/bash
+if [ "$appID" = "" ]; then
+    echo "need appID"
+    exit 1
+fi
+echo "Start $appID"
+execute start $appID

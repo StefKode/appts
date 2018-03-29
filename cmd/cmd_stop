@@ -1,0 +1,7 @@
+#!/bin/bash
+if [ "$appID" = "" ]; then
+    echo "need appID"
+    exit 1
+fi
+echo "Stop $appID"
+execute stop $appID

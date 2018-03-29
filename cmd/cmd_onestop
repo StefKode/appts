@@ -1,0 +1,11 @@
+#!/bin/bash
+if [ "$name" = "" ]; then
+    echo "need args: name extport intport dir"
+    exit 1
+fi
+creat=$(execute create $name $extport $intport)
+app=$(echo $creat | awk '{print $2}' | sed -e 's/name=//')
+echo "Created : $app"
+$0 -deploy $app -dir "$dir"
+execute restart $app
+echo "Done"

@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "Archive appID=$appID"
+if [ "$hint" != "" ]; then
+        echo "Optional hint = $hint"
+fi
+execute archive $appID "$hint"
