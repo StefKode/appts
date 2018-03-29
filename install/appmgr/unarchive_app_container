@@ -1,0 +1,25 @@
+#!/bin/bash 
+
+archive="$1"
+name=$(echo $archive | sed -e 's/=.*$//')
+ts=$(echo $archive | sed -e 's/^.*=//')
+
+dir=".archive/$name=$ts"
+
+cd /var/lib/lxc
+
+if [ ! -d "$dir" ]; then
+	echo "Archived app \"$archive\" does not exist"
+	exit 1
+fi
+
+echo "App: $name"
+
+if [ -d "$name" ]; then
+	echo "Archived app \"$archive\" cannot be restored"
+	echo "--> There is another app with name $name!"
+	exit 1
+fi
+
+mv $dir $name
+lxc-start -n $name -d

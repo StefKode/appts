@@ -1,0 +1,5 @@
+modprobe overlay
+cd /var/lib/lxc/
+rm -rf $1/.ofswork
+mkdir -p $1/.ofswork
+mount -t overlay  -o lowerdir=app-platform/rootfs/,upperdir=$1/rootfs/,workdir=$1/.ofswork overlay $1/rootfs/

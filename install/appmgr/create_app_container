@@ -1,0 +1,121 @@
+#!/bin/bash 
+desc="$1"
+shift
+extport="$1"
+shift
+intport="$1"
+appdir=$(cat - << END
+#name__mac_______________vent___vnet_ip_______guest_ip________ssh_forward
+app-03 00:16:3e:03:26:89 vnet3  192.168.203.1 192.168.203.100 2003
+app-04 00:16:3e:04:26:89 vnet4  192.168.204.1 192.168.204.100 2004
+app-05 00:16:3e:05:26:89 vnet5  192.168.205.1 192.168.205.100 2005
+app-06 00:16:3e:06:26:89 vnet6  192.168.206.1 192.168.206.100 2006
+app-07 00:16:3e:07:26:89 vnet7  192.168.207.1 192.168.207.100 2007
+app-08 00:16:3e:08:26:89 vnet8  192.168.208.1 192.168.208.100 2008
+app-09 00:16:3e:09:26:89 vnet9  192.168.209.1 192.168.209.100 2009
+app-10 00:16:3e:10:26:89 vnet10 192.168.210.1 192.168.210.100 2010
+app-11 00:16:3e:11:26:89 vnet11 192.168.211.1 192.168.211.100 2011
+app-12 00:16:3e:12:26:89 vnet12 192.168.212.1 192.168.212.100 2012
+app-13 00:16:3e:13:26:89 vnet13 192.168.213.1 192.168.213.100 2013
+END
+)
+
+BASEDIR=/var/lib/lxc
+cd $BASEDIR
+
+#get all existing dirs
+existing=$(ls -1 | grep '^app-[0-9]*$')
+
+ignorelist="-v -e \#"
+for dir in $existing;
+do
+    ignorelist="$ignorelist -e $dir"
+done
+
+nextfree=$(echo "$appdir" | grep $ignorelist | head -n 1)
+
+if [ "$nextfree" = "" ]; then
+    echo "no free container"
+    exit 1
+fi
+
+name=$(   echo $nextfree | awk '{print $1}')
+mac=$(    echo $nextfree | awk '{print $2}')
+vnet=$(   echo $nextfree | awk '{print $3}')
+router=$( echo $nextfree | awk '{print $4}')
+guestip=$(echo $nextfree | awk '{print $5}')
+sshforw=$(echo $nextfree | awk '{print $6}')
+
+#echo "Next-free:"
+#echo "name    = $name"
+#echo "mac     = $mac"
+#echo "vnet    = $vnet"
+#echo "router  = $router"
+#echo "guestip = $guestip"
+#echo "sshforw = $sshforw"
+
+#create
+mkdir -p $name
+cat - > $name/config << END
+lxc.start.auto = 1
+lxc.start.delay = 5
+lxc.hook.pre-start = /var/lib/lxc/bin/overlayup   \$LXC_NAME
+lxc.hook.post-stop = /var/lib/lxc/bin/overlaydown \$LXC_NAME
+lxc.network.type = veth
+lxc.network.script.up = /var/lib/lxc/$name/vnetup
+lxc.network.hwaddr = $mac
+lxc.network.ipv4.gateway = $router
+lxc.network.ipv4 = $guestip/24
+lxc.network.veth.pair = $vnet
+lxc.network.name = $vnet
+lxc.network.flags = up
+lxc.start.auto = 1
+lxc.rootfs = /var/lib/lxc/$name/rootfs
+lxc.include = /usr/share/lxc/config/debian.common.conf
+lxc.mount = /var/lib/lxc/$name/fstab
+lxc.utsname = $name
+lxc.arch = armhf
+lxc.autodev = 1
+lxc.kmsg = 0
+END
+touch $name/fstab
+undername=$(echo $name | sed -e 's/-/_/')
+if [ "$intport" == "" ]; then 
+#-------------------------------------------
+cat - > $name/fw_setup.inc << END
+function connect_$undername {
+        IP=\$1
+        connect_port $sshforw 22 \$IP tcp
+}
+connect_$undername $guestip
+END
+#-------------------------------------------
+else
+cat - > $name/fw_setup.inc << END
+function connect_$undername {
+        IP=\$1
+        connect_port $sshforw 22 \$IP tcp
+        connect_port $extport $intport \$IP tcp
+}
+connect_$undername $guestip
+END
+fi
+#-------------------------------------------
+cat - > $name/vnetup << END
+ifconfig $vnet $router
+END
+mkdir -p $name/rootfs/etc
+cat - > $name/rootfs/etc/hosts << END
+127.0.0.1	localhost
+::1		localhost ip6-localhost ip6-loopback
+ff02::1		ip6-allnodes
+ff02::2		ip6-allrouters
+$guestip $name
+END
+echo "$name" > $name/rootfs/etc/hostname
+echo "$desc" > $name/description
+chmod +x $name/vnetup
+lxc-start -n $name -d
+bin/fw-setup > /dev/null
+
+echo "status=OK name=$name ssh=$sshforw"

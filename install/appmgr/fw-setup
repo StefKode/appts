@@ -1,0 +1,42 @@
+#!/bin/bash
+
+INTERFACE=eth0
+
+echo "Firewall Connector----------------"
+echo "> IF=$INTERFACE"
+echo "> Clear Rules"
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -t nat -F
+iptables -t mangle -F
+iptables -F
+iptables -X
+
+echo "> Enable NAT"
+iptables -t nat -F POSTROUTING
+iptables -t nat -A POSTROUTING -o $INTERFACE -j MASQUERADE
+
+function connect_port {
+	EXT_PORT=$1
+	INT_PORT=$2
+	INT_IP=$3
+	PROTO=$4
+
+	iptables -A PREROUTING -t nat -i $INTERFACE -p $PROTO --dport $EXT_PORT -j DNAT --to $INT_IP:$INT_PORT
+	iptables -A FORWARD -p $PROTO -d $INT_IP --dport $EXT_PORT -j ACCEPT
+}
+
+function direct_connect {
+	PROTO=$1
+	PORT=$2
+	INT_IP=$3
+	connect_port $PORT $PORT $INT_IP $PROTO
+}
+
+cd /var/lib/lxc
+for inc in */fw_setup.inc;
+do
+	echo "> Include $inc"
+	. $inc
+done

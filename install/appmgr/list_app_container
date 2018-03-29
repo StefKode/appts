@@ -1,0 +1,24 @@
+#!/bin/bash
+
+echo "APP-ID     | APP-NAME             | STATE"
+echo "-----------+----------------------+-----------"
+cd /var/lib/lxc
+ls -1 */is_appts | sed -e 's/\/.*$//' | while read line;
+do
+	printf "%-10s | " "$line" 
+	printf "%-20s | " "$(cat $line/description)"
+	printf "%-8s " $(lxc-info -s -n $line | awk '{print $2}')
+	echo ""
+done
+
+if [ "$1" = "archive" ]; then
+	echo ""
+	echo "Archived Containers:"
+	echo "--------------------"
+	cd /var/lib/lxc/.archive
+	ls -1 | while read li;
+	do
+		mem=$(du -xsm "$li" | awk '{print $1" MB"}')
+		printf "%-29s %7s\n" "$li" "$mem"
+	done
+fi

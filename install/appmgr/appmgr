@@ -1,0 +1,72 @@
+#!/bin/bash
+
+if [ "$1" = "getport" ]; then
+	/var/lib/lxc/bin/getsshport_app_container $2
+	exit $?
+fi
+
+if [ "$1" = "create" ]; then
+	/var/lib/lxc/bin/create_app_container $2 $3 $4
+	exit $?
+fi
+
+if [ "$1" = "list" ]; then
+	/var/lib/lxc/bin/list_app_container $2
+	exit $?
+fi
+
+if [ "$1" = "lxc" ]; then
+	lxc-ls --fancy
+	exit
+fi
+
+if [ "$1" = "delete" ]; then
+	/var/lib/lxc/bin/delete_app_container $2
+	exit $?
+fi
+
+if [ "$1" = "restart" ]; then
+	/var/lib/lxc/bin/restart_app_container $2
+	exit $?
+fi
+
+if [ "$1" = "start" ]; then
+	/var/lib/lxc/bin/start_app_container $2
+	exit $?
+fi
+
+if [ "$1" = "stop" ]; then
+	/var/lib/lxc/bin/stop_app_container $2
+	exit $?
+fi
+
+if [ "$1" = "archive" ]; then
+	/var/lib/lxc/bin/archive_app_container $2 "$3"
+	exit $?
+fi
+
+if [ "$1" = "restore" ]; then
+	/var/lib/lxc/bin/unarchive_app_container $2
+	exit $?
+fi
+
+if [ "$1" = "console" ]; then
+	/var/lib/lxc/bin/attach_app_container $2
+	exit $?
+fi
+
+if [ "$1" = "delete-app-contents" ]; then
+	/var/lib/lxc/bin/delcont_app_container $2
+	exit $?
+fi
+
+if [ "$1" = "listfw" ]; then
+	if [ "$2" == "" ]; then
+		iptables -L -n -t nat -v
+	else
+		iptables -L -n -t nat -v | grep $2
+	fi
+	exit
+fi
+
+/var/lib/lxc/bin/list_app_container

@@ -1,0 +1,2 @@
+cd /var/lib/lxc/
+umount $1/rootfs/

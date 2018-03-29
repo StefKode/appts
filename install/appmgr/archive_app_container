@@ -1,0 +1,28 @@
+#!/bin/bash 
+
+name="$1"
+hint="$2"
+
+testName="$(echo $name | grep '^app-[0-9]*$')"
+
+cd /var/lib/lxc
+
+if [ ! -d "$name" ]; then
+	echo "App $name does not exist"
+	exit 1
+fi
+
+if [ "$testName" = "" ]; then
+	echo "App $name cannot be archived"
+	exit 1
+fi
+
+lxc-stop -n $name 
+echo "Wait for unmounting"
+sleep 5
+mkdir -p .archive
+if [ "$hint" == "" ]; then
+	mv $name .archive/"${name}=$(date +%Y-%m-%d_%H-%M-%S)"
+else
+	mv $name .archive/"${name}=$(date +%Y-%m-%d_%H-%M-%S)-$hint"
+fi

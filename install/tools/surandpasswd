@@ -1,0 +1,4 @@
+#!/bin/sh
+#Generate Random 6 char password
+clearpass=`openssl rand -base64 6`
+echo root:$clearpass | chpasswd

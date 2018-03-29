@@ -1,0 +1,20 @@
+#!/bin/bash 
+
+name="$1"
+
+testName="$(echo $name | grep '^app-[0-9]*$')"
+
+cd /var/lib/lxc
+
+if [ ! -d "$name" ]; then
+	echo "App $name does not exist"
+	exit 1
+fi
+
+if [ "$testName" = "" ]; then
+	echo "App $name cannot be deleted"
+	exit 1
+fi
+
+lxc-start -n $name -d
+
