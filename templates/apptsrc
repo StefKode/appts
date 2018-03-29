@@ -1,0 +1,7 @@
+# AppTheShelf Default settings
+
+#user for container
+user=app
+
+#host name/address of guest
+host=<FILL-IN>

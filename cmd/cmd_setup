@@ -1,0 +1,17 @@
+#!/bin/bash
+
+rc="$HOME/.apptsrc"
+
+if [ "$EDITOR" = "" ]; then
+    echo "you need to set EDITOR environment variable"
+    exit 1
+fi
+
+if [ -e "$rc" ]; then
+    $EDITOR "$rc"
+    exit
+fi
+
+echo "install template"
+cp "$install/templates/apptsrc" "$rc"
+$EDITOR "$rc"

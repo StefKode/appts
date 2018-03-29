@@ -1,6 +1,12 @@
 #!/bin/bash
 
 install="$(dirname $(readlink -f $0))"
+rc="$HOME/.apptsrc"
+
+#dont like to source from outside the package
+if [ -e "$rc" ]; then
+    . "$install/loadconfig"
+fi
 
 cmd=""
 dir=""
@@ -11,8 +17,6 @@ hint=""
 listarchive=""
 ahost=""
 n=0
-user=pi
-host=dax
 connection="$user@$host"
 host="$(echo $connection | sed -e 's/^.*@//')"
 quiet=0
@@ -284,6 +288,13 @@ do
             ahost="$1"
             ;;
             #--------------------------
+        #cmd/ -setup /  / install or setup default settings
+        "-setup")
+            user="none"
+            host="none"
+            cmd="setup"
+            ;;
+            #--------------------------
         #cmd/ -h / / print this help
         "-h")
             "$install/showhelp"
@@ -304,6 +315,11 @@ done
 if [ "$cmd" = "" ]; then
     $0 -h
     exit
+fi
+
+if [ "$user" = "" -o "$host" = "" ]; then
+    echo "need to specify -connect or -setup"
+    exit 1
 fi
 
 if [ $quiet -eq 0 ]; then
