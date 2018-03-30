@@ -2,6 +2,11 @@
 echo "AppTheShelf Platform Installer"
 echo ""
 
+if [ "$1" = "" ]; then
+    echo "need install spec"
+    exit 1
+fi
+
 if [ ! -e "$1" ]; then
     echo "cannot find install spec"
     exit 1
@@ -16,6 +21,7 @@ install="$(dirname $(readlink -f $ansible/../../appts))"
 tmpf=$(tempfile)
 tmpy=$tmpf.yml
 tmpvnet=$tmpf.vnet
+tmpfwsetup=$tmpf.fwsetup
 hosts="$tmpf.hosts"
 tmp=$tmpf.d
 mkdir -p $tmp
@@ -24,6 +30,7 @@ echo "  > Temp dir is $tmp"
 #---------------------------------------
 echo "[2] Copy yml parts"
 cp "$ansible"/part_* $tmp
+cp "$install"/install/tools/fw_setup.inc $tmpfwsetup
 
 #--------------------------------------- 
 echo "[3] Patch yml simple parts"
@@ -32,6 +39,7 @@ sed -i "s|APPTS_GUEST_SUDO_USER|$GUEST_SUDO_USER|"           "$tmp"/part_0000_th
 sed -i "s|APPTS_GUEST_SUDO_USER|$GUEST_SUDO_USER|"           "$tmp"/part_0300_pwd_less
 sed -i "s|APPTS_INSTALL_PATH|$install|"                      "$tmp"/part_0400_install_appmgr
 sed -i "s|APPTS_VNET_SCRIPT|$tmpvnet|"                       "$tmp"/part_0400_install_appmgr
+sed -i "s|APPTS_FW_SETUP|$tmpfwsetup|"                       "$tmp"/part_0400_install_appmgr
 sed -i "s|APPTS_BASE_LAYER_NET_OCTET|$BASE_LAYER_NET_OCTET|" "$tmp"/part_0500_bigchunk
 sed -i "s|APPTS_BASE_LAYER_NET_ADDR|$BASE_LAYER_NET_ADDR|"   "$tmp"/part_0500_bigchunk
 sed -i "s|APPTS_HW_OCT1|$HW_OCT1|"                           "$tmp"/part_0500_bigchunk
@@ -40,7 +48,8 @@ sed -i "s|APPTS_BASE_LAYER_NET_ADDR|$BASE_LAYER_NET_ADDR|"   "$tmp"/part_0600_ad
 sed -i "s|APPTS_SSH_KEY_FOR_LOGIN|$SSH_KEY_FOR_LOGIN|"       "$tmp"/part_0800_transfer_ssh_key
 sed -i "s|APPTS_BASE_LAYER_NET_ADDR|$BASE_LAYER_NET_ADDR|"   "$tmp"/part_0820_wait_for_come_back
 sed -i "s|APPTS_GUEST_HOST|$GUEST_HOST|"                     "$tmp"/part_1100_the_end
-sed -i "s|APPTS_GUEST_USER|$GUEST_USER|"                     "$tmp"/part_1100_the_end
+sed -i "s|APPTS_GUEST_SUDO_USER|$GUEST_SUDO_USER|"           "$tmp"/part_1100_the_end
+sed -i "s|APPTS_BASE_LAYER_NET_ADDR|$BASE_LAYER_NET_ADDR|"   "$tmpfwsetup"
 
 #--------------------------------------- 
 echo "[4] Patch yml complex parts"
@@ -78,20 +87,23 @@ echo ""                             >> "$tmp"/part_1000_install_packages
 
 echo "[5] Merge yml"
 cat "$tmp"/part_* > "$tmpy"
+
 echo "  > create hosts file"
 echo "[$GUEST_HOST]" >  $hosts
 echo "$GUEST_HOST"   >> $hosts
+echo "[apps]"        >> $hosts
+echo "appts-base-layer ansible_port=2000 ansible_host=$GUEST_HOST" >> $hosts
+
 echo "  > APPTS_YML=$tmpy"
 echo "[8] Press Enter to start ansible installation"
 read a
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook --ask-sudo-pass -i "$hosts" -s "$tmpy"
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook --ask-sudo-pass -i "$hosts" -s "$tmpy"
 
 echo "[9] Clean up"
-tmpbase=$(basname $tmpf)
-echo $tmpbase
-read d
+tmpbase=$(basename $tmpf)
 
-if [ -f "/tmp/$tmpbase" ]; then
+if [ -f "/tmp/$tmpbase.yml" ]; then
     rm -rf /tmp/$tmpbase.*
     rm -f  /tmp/$tmpbase
     echo "  > done"

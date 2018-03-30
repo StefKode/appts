@@ -16,7 +16,7 @@
 
    - name: app-platform install fw rules
      copy:
-        src: APPTS_INSTALL_PATH/install/bin/fw_setup.inc
+        src: APPTS_FW_SETUP
         dest: /var/lib/lxc/appts-base-layer/fw_setup.inc
         owner: root
         group: root
