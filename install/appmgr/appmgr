@@ -60,6 +60,11 @@ if [ "$1" = "delete-app-contents" ]; then
 	exit $?
 fi
 
+if [ "$1" = "getappid" ]; then
+	/var/lib/lxc/bin/getappid_app_container $2
+	exit $?
+fi
+
 if [ "$1" = "listfw" ]; then
 	if [ "$2" == "" ]; then
 		iptables -L -n -t nat -v

@@ -2,8 +2,6 @@
 
 name="$1"
 
-testName="$(echo $name | grep '^app-[0-9]*$')"
-
 cd /var/lib/lxc
 
 if [ ! -d "$name" ]; then
@@ -11,7 +9,7 @@ if [ ! -d "$name" ]; then
 	exit 1
 fi
 
-if [ "$testName" = "" ]; then
+if [ ! -e $name/is_appts ]; then
 	echo "App $name cannot be deleted"
 	exit 1
 fi

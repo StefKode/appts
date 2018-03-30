@@ -6,7 +6,7 @@ cd /var/lib/lxc
 ls -1 */is_appts | sed -e 's/\/.*$//' | while read line;
 do
 	printf "%-10s | " "$line" 
-	printf "%-20s | " "$(cat $line/description)"
+	printf "%-20s | " "$(cat $line/appts.name)"
 	printf "%-8s " $(lxc-info -s -n $line | awk '{print $2}')
 	echo ""
 done

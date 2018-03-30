@@ -56,6 +56,7 @@ sshforw=$(echo $nextfree | awk '{print $6}')
 
 #create
 mkdir -p $name
+touch $name/is_appts
 cat - > $name/config << END
 lxc.start.auto = 1
 lxc.start.delay = 5
@@ -113,7 +114,7 @@ ff02::2		ip6-allrouters
 $guestip $name
 END
 echo "$name" > $name/rootfs/etc/hostname
-echo "$desc" > $name/description
+echo "$desc" > $name/appts.name
 chmod +x $name/vnetup
 lxc-start -n $name -d
 bin/fw-setup > /dev/null
