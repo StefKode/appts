@@ -1,4 +1,13 @@
 #!/bin/bash
+###############################################################################
+# AppTheShelf
+# Elegant LXC remote container management
+#
+# Copyright:
+# Stefan Koch <stefkoch@posteo.de>
+#
+# License: GPLv3
+###############################################################################
 
 if [ ! -e appts ]; then
     echo "appts not found"

@@ -1,4 +1,14 @@
 #!/bin/bash
+###############################################################################
+# AppTheShelf
+# Elegant LXC remote container management
+#
+# Copyright:
+# Stefan Koch <stefkoch@posteo.de>
+#
+# License: GPLv3
+###############################################################################
+
 appID=$(getAppID "$name")
 if [ "$appID" = "" ]; then
     echo "app not found"

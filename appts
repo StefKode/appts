@@ -1,5 +1,13 @@
 #!/bin/bash
-
+###############################################################################
+# AppTheShelf
+# Elegant LXC remote container management
+#
+# Copyright:
+# Stefan Koch <stefkoch@posteo.de>
+#
+# License: GPLv3
+###############################################################################
 install="$(dirname $(readlink -f $0))"
 rc="$HOME/.apptsrc"
 

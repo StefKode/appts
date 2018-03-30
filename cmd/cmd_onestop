@@ -1,4 +1,14 @@
 #!/bin/bash
+###############################################################################
+# AppTheShelf
+# Elegant LXC remote container management
+#
+# Copyright:
+# Stefan Koch <stefkoch@posteo.de>
+#
+# License: GPLv3
+###############################################################################
+
 if [ "$name" = "" ]; then
     echo "need args: name extport intport dir"
     exit 1

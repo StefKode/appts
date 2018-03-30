@@ -1,2 +1,12 @@
 #!/bin/bash
+###############################################################################
+# AppTheShelf
+# Elegant LXC remote container management
+#
+# Copyright:
+# Stefan Koch <stefkoch@posteo.de>
+#
+# License: GPLv3
+###############################################################################
+
 execute restore "$archive"

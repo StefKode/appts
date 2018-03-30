@@ -1,3 +1,13 @@
+###############################################################################
+# AppTheShelf
+# Elegant LXC remote container management
+#
+# Copyright:
+# Stefan Koch <stefkoch@posteo.de>
+#
+# License: GPLv3
+###############################################################################
+
 modprobe overlay
 cd /var/lib/lxc/
 rm -rf $1/.ofswork

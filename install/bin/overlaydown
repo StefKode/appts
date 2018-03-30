@@ -1,2 +1,12 @@
+###############################################################################
+# AppTheShelf
+# Elegant LXC remote container management
+#
+# Copyright:
+# Stefan Koch <stefkoch@posteo.de>
+#
+# License: GPLv3
+###############################################################################
+
 cd /var/lib/lxc/
 umount $1/rootfs/
