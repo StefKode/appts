@@ -4,4 +4,13 @@ name="$1"
 
 cd /var/lib/lxc
 
-grep "^$1$" app-*/appts.name  | sed -e 's/\/.*$//'
+for app in app-*;
+do
+        actname=$(cat $app/appts.name)
+        if [ "$name" = "$actname" ]; then
+                echo "$app"
+                exit 0
+        fi
+done
+exit 1
+

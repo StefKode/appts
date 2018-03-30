@@ -6,6 +6,14 @@
         group: root
         mode: 0755
 
+   - name: patch app directory
+     copy:
+        src: APPTS_CREATE_APP
+        dest: /var/lib/lxc/bin/create_app_container
+        owner: root
+        group: root
+        mode: 0755
+
    - name: app-platform install lxc vnet script
      copy:
         src: APPTS_VNET_SCRIPT

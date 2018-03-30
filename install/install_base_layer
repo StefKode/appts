@@ -22,6 +22,7 @@ tmpf=$(tempfile)
 tmpy=$tmpf.yml
 tmpvnet=$tmpf.vnet
 tmpfwsetup=$tmpf.fwsetup
+tmpcreateapp=$tmpf.createapp
 hosts="$tmpf.hosts"
 tmp=$tmpf.d
 mkdir -p $tmp
@@ -31,6 +32,7 @@ echo "  > Temp dir is $tmp"
 echo "[2] Copy yml parts"
 cp "$ansible"/part_* $tmp
 cp "$install"/install/tools/fw_setup.inc $tmpfwsetup
+cp "$install"/install/bin/create_app_container $tmpcreateapp
 
 #--------------------------------------- 
 echo "[3] Patch yml simple parts"
@@ -40,6 +42,7 @@ sed -i "s|APPTS_GUEST_SUDO_USER|$GUEST_SUDO_USER|"           "$tmp"/part_0300_pw
 sed -i "s|APPTS_INSTALL_PATH|$install|"                      "$tmp"/part_0400_install_appmgr
 sed -i "s|APPTS_VNET_SCRIPT|$tmpvnet|"                       "$tmp"/part_0400_install_appmgr
 sed -i "s|APPTS_FW_SETUP|$tmpfwsetup|"                       "$tmp"/part_0400_install_appmgr
+sed -i "s|APPTS_CREATE_APP|$tmpcreateapp|"                   "$tmp"/part_0400_install_appmgr
 sed -i "s|APPTS_BASE_LAYER_NET_OCTET|$BASE_LAYER_NET_OCTET|" "$tmp"/part_0500_bigchunk
 sed -i "s|APPTS_BASE_LAYER_NET_ADDR|$BASE_LAYER_NET_ADDR|"   "$tmp"/part_0500_bigchunk
 sed -i "s|APPTS_HW_OCT1|$HW_OCT1|"                           "$tmp"/part_0500_bigchunk
@@ -88,11 +91,27 @@ echo ""                             >> "$tmp"/part_1000_install_packages
 echo "[5] Merge yml"
 cat "$tmp"/part_* > "$tmpy"
 
-echo "  > create hosts file"
+echo "[6] create hosts file"
 echo "[$GUEST_HOST]" >  $hosts
 echo "$GUEST_HOST"   >> $hosts
 echo "[apps]"        >> $hosts
 echo "appts-base-layer ansible_port=2000 ansible_host=$GUEST_HOST" >> $hosts
+
+echo "[7] generate local app directory"
+appIdx=0
+net_addr=$BASE_LAYER_NET_ADDR
+hw_oct=$HW_OCT2
+port=2000
+list=$(while [ $appIdx -le 15 ];
+do
+    let net_addr++
+    let appIdx++
+    let hw_oct++
+    let port++
+    printf "app-%02d 00:16:$HW_OCT1:%02x:26:89 vnet%d  192.168.%03d.1 192.168.%03d.100 %dAPPTS_NL" $appIdx $hw_oct $net_addr $net_addr $net_addr $port
+done)
+sed -i "s|APPTS_APP_DIRECTORY|${list}|" "$tmpcreateapp"
+sed -i 's|APPTS_NL|\n|g'                "$tmpcreateapp"
 
 echo "  > APPTS_YML=$tmpy"
 echo "[8] Press Enter to start ansible installation"
