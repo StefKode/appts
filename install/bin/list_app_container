@@ -3,13 +3,13 @@
 echo "APP-ID     | APP-NAME             | STATE"
 echo "-----------+----------------------+-----------"
 cd /var/lib/lxc
-ls -1 */is_appts | sed -e 's/\/.*$//' | while read line;
+(ls -1 */is_appts 2> /dev/null) | sed -e 's/\/.*$//' | while read line;
 do
 	printf "%-10s | " "$line" 
 	printf "%-20s | " "$(cat $line/appts.name)"
 	printf "%-8s " $(lxc-info -s -n $line | awk '{print $2}')
 	echo ""
-done
+done 2> /dev/null
 
 if [ "$1" = "archive" ]; then
 	echo ""
@@ -20,5 +20,5 @@ if [ "$1" = "archive" ]; then
 	do
 		mem=$(du -xsm "$li" | awk '{print $1" MB"}')
 		printf "%-29s %7s\n" "$li" "$mem"
-	done
+	done 
 fi

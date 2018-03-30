@@ -4,7 +4,7 @@ name="$1"
 
 cd /var/lib/lxc
 
-for app in app-*;
+(ls -d1 app-* 2> /dev/null) | while read app;
 do
         actname=$(cat $app/appts.name)
         if [ "$name" = "$actname" ]; then

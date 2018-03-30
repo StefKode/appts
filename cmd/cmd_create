@@ -1,3 +1,8 @@
 #!/bin/bash
+appID=$(getAppID "$name")
+if [ "$appID" != "" ]; then
+    echo "name already used"
+    exit 1
+fi
 echo "Create new app ($name)"
 execute create $name $extport $intport
