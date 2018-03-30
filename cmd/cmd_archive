@@ -1,6 +1,8 @@
 #!/bin/bash
-echo "Archive appID=$appID"
-if [ "$hint" != "" ]; then
-        echo "Optional hint = $hint"
+appID=$(getAppID "$name")
+if [ "$appID" = "" ]; then
+    echo "app not found"
+    exit 1
 fi
+echo "Archive appID=$appID ($hint)"
 execute archive $appID "$hint"

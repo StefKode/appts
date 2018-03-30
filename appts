@@ -29,8 +29,8 @@ function execute {
 while [ "$1" != "" ];
 do
     case "$1" in
-        #opt/ -connect / user@host / use specified connection insted of default
-        "-connect")
+        #opt/ -con / user@host / use specified connection insted of default
+        "-con")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
                 exit 1
@@ -88,20 +88,6 @@ do
             intport="$1"
             ;;
             #--------------------------
-        #opt/ -name / name / name of the app to create
-        "-name")
-            if [ $n -eq 0 ]; then
-                echo "command missing"
-                exit 1
-            fi
-            shift
-            if [ "$1" = "" ]; then
-                echo "need string"
-                exit 1
-            fi
-            name="$1"
-            ;;
-            #--------------------------
         #cmd/ -l /  / list all available apps
         "-l")
             if [ $n -ne 0 ]; then
@@ -130,58 +116,78 @@ do
             cmd="lxc"
             ;;
             #--------------------------
-        #cmd/ -deploy / appID / deploy dir to app (-dir)
+        #cmd/ -deploy / name / deploy dir to app (-dir)
         "-deploy")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
                 exit 1
             fi
             shift
-            appID=$1
+            if [ "$1" = "" ]; then
+                echo "need app name"
+                exit 1
+            fi
+            name=$1
             cmd="deploy"
             ;;
             #--------------------------
-        #cmd/ -del / appID / delete specified app
-        "-del")
+        #cmd/ -delete / name / delete specified app
+        "-delete")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
                 exit 1
             fi
             shift
-            appID=$1
+            if [ "$1" = "" ]; then
+                echo "need app name"
+                exit 1
+            fi
+            name=$1
             cmd="delete"
             ;;
             #--------------------------
-        #cmd/ -start / appID / start specified app
+        #cmd/ -start / name / start specified app
         "-start")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
                 exit 1
             fi
             shift
-            appID=$1
+            if [ "$1" = "" ]; then
+                echo "need app name"
+                exit 1
+            fi
+            name=$1
             cmd="start"
             ;;
             #--------------------------
-        #cmd/ -restart / appID / restart specified app
+        #cmd/ -restart / name / restart specified app
         "-restart")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
                 exit 1
             fi
             shift
-            appID=$1
+            if [ "$1" = "" ]; then
+                echo "need app name"
+                exit 1
+            fi
+            name=$1
             cmd="restart"
             ;;
             #--------------------------
-        #cmd/ -stop / appID / stop specified app
+        #cmd/ -stop / name / stop specified app
         "-stop")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
                 exit 1
             fi
             shift
-            appID=$1
+            if [ "$1" = "" ]; then
+                echo "need app name"
+                exit 1
+            fi
+            name=$1
             cmd="stop"
             ;;
             #--------------------------
@@ -191,15 +197,27 @@ do
                 echo "$1 is a command and must be used at first place"
                 exit 1
             fi
+            shift
+            if [ "$1" = "" ]; then
+                echo "need app name"
+                exit 1
+            fi 
             cmd="create"
+            name="$1"
             ;;
             #--------------------------
-        #cmd/ -onestop /  / create if app not exist, then deploy (-name -dir opt: -eport -iport)
+        #cmd/ -onestop / name / create if app not exist, then deploy (-dir opt: -eport -iport)
         "-onestop")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
                 exit 1
             fi
+            shift
+            if [ "$1" = "" ]; then
+                echo "need app name"
+                exit 1
+            fi 
+            name="$1"
             cmd="onestop"
             ;;
             #--------------------------
@@ -214,45 +232,36 @@ do
             cmd="listfw"
             ;;
             #--------------------------
-        #cmd/ -ssh / appID / ssh connect to specified app
+        #cmd/ -ssh / name / ssh connect to specified app
         "-ssh")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
                 exit 1
             fi
             shift
-            appID="$1"
+            if [ "$1" = "" ]; then
+                echo "need app name"
+                exit 1
+            fi
+            name=$1
             port="$(execute getport $appID)"
             cmd="ssh"
             ;;
             #--------------------------
-        #cmd/ -archive / appID / archive specified app (opt: -hint)
+        #cmd/ -archive / name / archive specified app
         "-archive")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
                 exit 1
             fi
-            cmd="archive"
             shift
             if [ "$1" = "" ]; then
                 echo "need appID"
                 exit 1
             fi
-            appID="$1"
-            ;;
-            #--------------------------
-        #opt/ -hint / appID / archive specified app
-        "-hint")
-            if [ $n -eq 0 ]; then
-                echo "command missing"
-                exit 1
-            fi
-            shift
-            if [ "$1" = "" ]; then
-                echo "need hint string"
-                exit 1
-            fi
+            name="$1"
             hint="$1"
+            cmd="archive"
             ;;
             #--------------------------
         #cmd/ -restore / archive / restore specified archive to app
@@ -266,26 +275,20 @@ do
             cmd="restore"
             ;;
             #--------------------------
-        #cmd/ -ansible / appID / get ansible host string for app (-ahost)
+        #cmd/ -ansible / name / get ansible host string for app 
         "-ansible")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
                 exit 1
             fi
             shift
-            appID="$1"
-            if [ "$appID" = "" ]; then
-               echo "need appID"
+            if [ "$1" = "" ]; then
+               echo "need name"
                exit 1
             fi 
+            name="$1"
             cmd="ansible"
             quiet=1
-            ;;
-            #--------------------------
-        #cmd/ -ahost / appID / set ansible hostname
-        "-ahost")
-            shift
-            ahost="$1"
             ;;
             #--------------------------
         #cmd/ -setup /  / install or setup default settings
@@ -326,6 +329,11 @@ if [ $quiet -eq 0 ]; then
     echo "APPTheShelf v1.0, ($connection)"
     echo ""
 fi
+
+###########################################################################
+function getAppID() {
+    execute getappid "$1"
+}
 
 ###########################################################################
 cmdfile="$install/cmd/cmd_$cmd"

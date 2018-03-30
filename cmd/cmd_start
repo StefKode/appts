@@ -1,7 +1,8 @@
 #!/bin/bash
+appID=$(getAppID "$name")
 if [ "$appID" = "" ]; then
-    echo "need appID"
+    echo "app not found"
     exit 1
 fi
-echo "Start $appID"
+echo "Start $appID ($name)"
 execute start $appID

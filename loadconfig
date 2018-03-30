@@ -5,4 +5,4 @@ do
     varnm=$(echo "$line" | awk -F= '{print $1}')
     value=$(echo "$line" | awk -F= '{print $2}')
     eval "$varnm=$value"
-done< <(cat "$rc" | grep -v -e '^#' -e '^$' -e '(' -e ')' -e '`' -e '[')
+done< <(cat "$rc" | grep -v -e '^#' -e '^$' -e '(' -e ')' -e '`' -e '\[')

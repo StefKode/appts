@@ -1,8 +1,9 @@
 #!/bin/bash
-if [ "$ahost" = "" ]; then
-    echo "need ansible hostname"
+appID=$(getAppID "$name")
+if [ "$appID" = "" ]; then
+    echo "app not found"
     exit 1
 fi
 port="$(execute getport $appID)"
 echo "[apps]"
-echo "wiki ansible_port=$port ansible_host=$host"
+echo "$name ansible_port=$port ansible_host=$host"

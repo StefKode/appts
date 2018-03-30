@@ -1,2 +1,8 @@
 #!/bin/bash
+appID=$(getAppID "$name")
+if [ "$appID" = "" ]; then
+    echo "app not found"
+    exit 1
+fi
+port="$(execute getport $appID)"
 ssh -p $port app@$host

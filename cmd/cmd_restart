@@ -1,7 +1,8 @@
 #!/bin/bash
+appID=$(getAppID "$name")
 if [ "$appID" = "" ]; then
-    echo "need appID"
+    echo "app not found"
     exit 1
 fi
-echo "Restart $appID"
+echo "Restart $appID ($name)"
 execute restart $appID
