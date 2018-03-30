@@ -1,0 +1,13 @@
+   - name: Want LXC related Packages..
+     apt: name={{item}} state=installed update_cache=true
+     with_items:
+       - lxc
+       - ifplugd
+       - python-pip
+       - gcc
+       - binutils
+       - python-dev
+       - iptables
+       - nginx 
+       APPTS_LXC_DEV
+

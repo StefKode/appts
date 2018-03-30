@@ -1,0 +1,5 @@
+   - name: Workaround - upload and apply lxc-dev
+     unarchive:
+        src: packs/lxc-dev.tgz
+        dest: /
+

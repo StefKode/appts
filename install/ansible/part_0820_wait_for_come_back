@@ -1,0 +1,11 @@
+   - name: waiting for server to come back
+     wait_for:
+         host: 192.168.APPTS_BASE_LAYER_NET_ADDR.100
+         port: 22
+
+   - name: waiting again
+     wait_for:
+         delay: 10
+         host: 192.168.APPTS_BASE_LAYER_NET_ADDR.100
+         port: 22
+

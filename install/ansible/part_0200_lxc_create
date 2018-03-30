@@ -1,0 +1,10 @@
+   - pip:
+        name: lxc-python2
+
+   - stat: path=/var/lib/lxc/appts-base-layer
+     register: appplatform
+
+   - name: Create platform Container 
+     command: lxc-create -n appts-base-layer --template debian -- --release jessie
+     when: appplatform.stat.exists == False
+

@@ -1,0 +1,17 @@
+   - name: Enable passwordless sudo for app
+     lineinfile:
+        dest: /var/lib/lxc/appts-base-layer/rootfs/etc/sudoers.d/01_app-nopw
+        line: '{{item}}'
+        create: yes
+     with_items:
+          - "app ALL=(ALL) NOPASSWD: ALL"
+
+   - name: Create ssh directory
+     file:
+        path: /var/lib/lxc/appts-base-layer/rootfs/home/app/.ssh
+        state: directory
+        owner: 1000
+        group: 1000
+        mode: 0700
+     when: app.stat.exists == False
+

@@ -1,0 +1,5 @@
+   - name: appts-base-layer - restart
+     lxc_container:
+        name: appts-base-layer
+        state: restarted
+

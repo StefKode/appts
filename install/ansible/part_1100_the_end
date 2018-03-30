@@ -1,0 +1,9 @@
+- hosts: APPTS_GUEST_HOST
+  remote_user: APPTS_GUEST_SUDO_USER
+  become_user: root
+  tasks:
+
+   - name: appts-base-layer - restart
+     lxc_container:
+        name: appts-base-layer
+        state: restarted

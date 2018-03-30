@@ -1,0 +1,8 @@
+   - name: Add appts-base-layer as host
+     lineinfile:
+        dest: /var/lib/lxc/appts-base-layer/rootfs/etc/hosts
+        line: '{{item}}'
+     with_items:
+          - "192.168.APPTS_BASE_LAYER_NET_ADDR.100 appts-base-layer"
+     when: app.stat.exists == False
+

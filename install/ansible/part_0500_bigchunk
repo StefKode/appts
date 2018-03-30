@@ -1,0 +1,55 @@
+   - name: Change lxc network type
+     replace:
+        dest: /var/lib/lxc/appts-base-layer/config
+        regexp: '^lxc.network.type = empty$'
+        replace: 'lxc.network.type = veth'
+        backup: no
+
+   - name: Configure lxc container
+     lineinfile:
+        dest: /var/lib/lxc/appts-base-layer/config
+        line: '{{item}}'
+        insertafter: "^lxc.network.type = veth$"
+     with_items:
+          - "lxc.start.auto = 1"
+          - "lxc.network.flags = up"
+          - "lxc.network.name = vnetAPPTS_BASE_LAYER_NET_OCTET"
+          - "lxc.network.veth.pair = vnetAPPTS_BASE_LAYER_NET_OCTET"
+          - "lxc.network.ipv4 = 192.168.APPTS_BASE_LAYER_NET_ADDR.100/24"
+          - "lxc.network.ipv4.gateway = 192.168.APPTS_BASE_LAYER_NET_ADDR.1"
+          - "lxc.network.hwaddr = 00:16:3e:APPTS_HW_OCT1:APPTS_HW_OCT2:89"
+          - "lxc.network.script.up = /var/lib/lxc/appts-base-layer/vnetup"
+
+   - name: appts-base-layer - assure started
+     lxc_container:
+        name: appts-base-layer
+        state: started
+
+   - name: Re-initialize firewall
+     command: /var/lib/lxc/bin/fw-setup
+  
+   - name: appts-base-layer - set default root password
+     lxc_container:
+        name: appts-base-layer
+        container_command: |
+            echo "root:root" | chpasswd
+     when: appplatform.stat.exists == False
+
+   - name: appts-base-layer - install additional packages
+     lxc_container:
+        name: appts-base-layer
+        container_command: |
+          apt-get update
+          apt-get install sudo python --force-yes -y
+
+   - stat: path=/var/lib/lxc/appts-base-layer/rootfs/home/app
+     register: app
+
+   - name: appts-base-layer - add app
+     lxc_container:
+        name: appts-base-layer
+        container_command: |
+            adduser app --disabled-password --gecos ""
+            usermod -a -G sudo app
+     when: app.stat.exists == False
+

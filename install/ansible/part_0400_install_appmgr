@@ -1,0 +1,24 @@
+   - name: deploy appmgr to lxc environment
+     copy:
+        src: APPTS_INSTALL_PATH/install/bin
+        dest: /var/lib/lxc
+        owner: root
+        group: root
+        mode: 0755
+
+   - name: app-platform install lxc vnet script
+     copy:
+        src: APPTS_VNET_SCRIPT
+        dest: /var/lib/lxc/appts-base-layer/vnetup
+        owner: root
+        group: root
+        mode: 0755
+
+   - name: app-platform install fw rules
+     copy:
+        src: APPTS_INSTALL_PATH/install/bin/fw_setup.inc
+        dest: /var/lib/lxc/appts-base-layer/fw_setup.inc
+        owner: root
+        group: root
+        mode: 0755
+

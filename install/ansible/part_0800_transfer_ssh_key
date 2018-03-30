@@ -1,0 +1,9 @@
+   - name: Set authorized key 
+     copy:
+        src: APPTS_SSH_KEY_FOR_LOGIN
+        dest: /var/lib/lxc/appts-base-layer/rootfs/home/app/.ssh/authorized_keys
+        owner: 1000
+        group: 1000
+        mode: 0600
+     when: app.stat.exists == False
+

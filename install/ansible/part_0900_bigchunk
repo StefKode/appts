@@ -1,0 +1,52 @@
+- hosts: appts-base-layer
+  remote_user: app
+  become_user: root
+  tasks:
+
+   - name: add app starter
+     lineinfile:
+        dest: /etc/rc.local
+        line: '{{item}}'
+        insertafter: "# By default this script does nothing."
+     with_items:
+          - "echo \"Start app hook\""
+          - "su -c /home/app/code/appstart.sh app &"
+
+   - name: Update Timezone to Etc/UTC
+     copy:
+       content: "Europe/Berlin\n"
+       dest: /etc/timezone
+       owner: root
+       group: root
+       mode:  0644
+     register: timezone
+
+   - name: Reconfigure Timezone Data
+     shell: dpkg-reconfigure -f noninteractive tzdata
+     when: timezone.changed
+
+   - name: setup locale
+     locale_gen:
+       name: en_US.UTF-8
+       state: present
+
+   - name: register locale
+     blockinfile: 
+       dest: /etc/profile
+       backup: no
+       content: "export LANG=en_US.UTF-8\n
+           export LANGUAGE=en_US.UTF-8\n
+           export LC_CTYPE=en_US.UTF-8\n
+           export LC_NUMERIC=en_US.UTF-8\n
+           export LC_TIME=en_US.UTF-8\n
+           export LC_COLLATE=en_US.UTF-8\n
+           export LC_MONETARY=en_US.UTF-8\n
+           export LC_MESSAGES=en_US.UTF-8\n
+           export LC_PAPER=en_US.UTF-8\n
+           export LC_NAME=en_US.UTF-8\n
+           export LC_ADDRESS=en_US.UTF-8\n
+           export LC_TELEPHONE=en_US.UTF-8\n
+           export LC_MEASUREMENT=en_US.UTF-8\n
+           export LC_IDENTIFICATION=en_US.UTF-8\n
+           export LC_ALL=en_US.UTF-8\n"
+

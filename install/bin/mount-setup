@@ -1,0 +1,14 @@
+#!/bin/bash
+
+BASE=/var/lib/lxc
+
+function bind_dev {
+	DEVNAME=$1
+	APP=$2
+	LOCATION=$BASE/$APP/rootfs/dev
+	echo "Create $LOCATION/$DEVNAME"
+	touch $LOCATION/$DEVNAME
+	mount --bind /dev/$DEVNAME $LOCATION/$DEVNAME
+}
+
+bind_dev ttyACM0 home-server

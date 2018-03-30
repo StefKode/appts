@@ -1,0 +1,100 @@
+#!/bin/bash
+echo "AppTheShelf Platform Installer"
+echo ""
+
+if [ ! -e "$1" ]; then
+    echo "cannot find install spec"
+    exit 1
+fi
+
+echo "[1] Source install spec"
+. "$1"
+
+ansible="$(dirname $(readlink -f $0))/ansible"
+install="$(dirname $(readlink -f $ansible/../../appts))"
+
+tmpf=$(tempfile)
+tmpy=$tmpf.yml
+tmpvnet=$tmpf.vnet
+hosts="$tmpf.hosts"
+tmp=$tmpf.d
+mkdir -p $tmp
+echo "  > Temp dir is $tmp"
+
+#---------------------------------------
+echo "[2] Copy yml parts"
+cp "$ansible"/part_* $tmp
+
+#--------------------------------------- 
+echo "[3] Patch yml simple parts"
+sed -i "s|APPTS_GUEST_HOST|$GUEST_HOST|"                     "$tmp"/part_0000_the_start
+sed -i "s|APPTS_GUEST_SUDO_USER|$GUEST_SUDO_USER|"           "$tmp"/part_0000_the_start
+sed -i "s|APPTS_GUEST_SUDO_USER|$GUEST_SUDO_USER|"           "$tmp"/part_0300_pwd_less
+sed -i "s|APPTS_INSTALL_PATH|$install|"                      "$tmp"/part_0400_install_appmgr
+sed -i "s|APPTS_VNET_SCRIPT|$tmpvnet|"                       "$tmp"/part_0400_install_appmgr
+sed -i "s|APPTS_BASE_LAYER_NET_OCTET|$BASE_LAYER_NET_OCTET|" "$tmp"/part_0500_bigchunk
+sed -i "s|APPTS_BASE_LAYER_NET_ADDR|$BASE_LAYER_NET_ADDR|"   "$tmp"/part_0500_bigchunk
+sed -i "s|APPTS_HW_OCT1|$HW_OCT1|"                           "$tmp"/part_0500_bigchunk
+sed -i "s|APPTS_HW_OCT2|$HW_OCT2|"                           "$tmp"/part_0500_bigchunk
+sed -i "s|APPTS_BASE_LAYER_NET_ADDR|$BASE_LAYER_NET_ADDR|"   "$tmp"/part_0600_add_host
+sed -i "s|APPTS_SSH_KEY_FOR_LOGIN|$SSH_KEY_FOR_LOGIN|"       "$tmp"/part_0800_transfer_ssh_key
+sed -i "s|APPTS_BASE_LAYER_NET_ADDR|$BASE_LAYER_NET_ADDR|"   "$tmp"/part_0820_wait_for_come_back
+sed -i "s|APPTS_GUEST_HOST|$GUEST_HOST|"                     "$tmp"/part_1100_the_end
+sed -i "s|APPTS_GUEST_USER|$GUEST_USER|"                     "$tmp"/part_1100_the_end
+
+#--------------------------------------- 
+echo "[4] Patch yml complex parts"
+
+if [ "$ARMHF_LXC_WORKAROUND" = "no" ]; then
+    rm -r "$tmp"/part_0119_lxc_workaround_armhf
+    sed -i "s|APPTS_LXC_DEV|- lxc-dev|"                      "$tmp"/part_0100_guest_packages
+else
+    sed -i "s|APPTS_LXC_DEV||"                               "$tmp"/part_0100_guest_packages
+fi
+
+echo "  > create vnetup"
+echo "ifconfig vnet$BASE_LAYER_NET_OCTET 192.168.$BASE_LAYER_NET_ADDR.1" > "$tmpvnet"
+
+echo "  > native packages"
+for package in $BASE_LAYER_PACKAGES;
+do
+    echo "        - $package"       >> "$tmp"/part_1000_install_packages
+done
+echo ""                             >> "$tmp"/part_1000_install_packages
+
+echo "  > pip3 packages"
+for package in $BASE_LAYER_PIP3_PACKAGES;
+do
+    echo "   - pip:"                >> "$tmp"/part_1000_install_packages
+    echo "        executable: pip3" >> "$tmp"/part_1000_install_packages
+    echo "        name: $package"   >> "$tmp"/part_1000_install_packages
+    echo ""                         >> "$tmp"/part_1000_install_packages
+done
+echo ""                             >> "$tmp"/part_1000_install_packages
+
+echo "  > ansible extra"
+echo "$PACKAGES_EXTRA_ANSIBLE"      >> "$tmp"/part_1000_install_packages
+echo ""                             >> "$tmp"/part_1000_install_packages
+
+echo "[5] Merge yml"
+cat "$tmp"/part_* > "$tmpy"
+echo "  > create hosts file"
+echo "[$GUEST_HOST]" >  $hosts
+echo "$GUEST_HOST"   >> $hosts
+echo "  > APPTS_YML=$tmpy"
+echo "[8] Press Enter to start ansible installation"
+read a
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook --ask-sudo-pass -i "$hosts" -s "$tmpy"
+
+echo "[9] Clean up"
+tmpbase=$(basname $tmpf)
+echo $tmpbase
+read d
+
+if [ -f "/tmp/$tmpbase" ]; then
+    rm -rf /tmp/$tmpbase.*
+    rm -f  /tmp/$tmpbase
+    echo "  > done"
+else
+    echo "  > cleanup failed"
+fi

@@ -1,0 +1,8 @@
+   - name: Enable passwordless sudo for appmgr
+     lineinfile:
+        dest: /etc/sudoers.d/02_create_app
+        line: '{{item}}'
+        create: yes
+     with_items:
+          - "APPTS_GUEST_SUDO_USER ALL=(ALL) NOPASSWD: /var/lib/lxc/bin/appmgr"
+
