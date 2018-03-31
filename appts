@@ -96,7 +96,11 @@ do
             intport="$1"
             ;;
             #--------------------------
+        #cmd/ -la /  / same as -l -a
         #cmd/ -l /  / list all available apps
+        "-la")
+            listarchive="archive"
+            ;&
         "-l")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
