@@ -9,4 +9,23 @@
 # License: GPLv3
 ###############################################################################
 
-execute list $listarchive
+if [ "$colorize" = "true" ]; then
+    execute list $listarchive | while read line;
+    do
+        isrun=$(echo "$line" | grep RUN)
+        isappline=$(echo "$line" | grep "^app")
+
+        if [ "$isappline" != "" ]; then
+            if [ "$isrun" != "" ]; then
+                echo -e "\e[92m$line\e[0m"
+            else
+                echo -e "\e[94m$line\e[0m"
+            fi
+        else
+            echo "$line"
+        fi
+
+    done
+else
+    execute list $listarchive
+fi

@@ -5,3 +5,6 @@ user=app
 
 #host name/address of guest
 host=<FILL-IN>
+
+#color status in listings
+colorize=true
