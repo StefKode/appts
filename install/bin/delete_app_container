@@ -9,20 +9,28 @@
 # License: GPLv3
 ###############################################################################
 
-
-name="$1"
+appID="$1"
 
 cd /var/lib/lxc
 
-if [ ! -d "$name" ]; then
-	echo "App $name does not exist"
-	exit 1
+if [ ! -d "$appID" ]; then
+        echo "App $appID does not exist"
+        exit 1
 fi
 
-if [ ! -e $name/is_appts ]; then
-	echo "App $name cannot be deleted"
-	exit 1
+if [ ! -e $appID/is_appts ]; then
+        echo "App $appID cannot be deleted"
+        exit 1
 fi
 
-lxc-destroy -f -n $name
+name="$(cat $appID/appts.name)"
+lxc-destroy -f -n $appID
 bin/fw-setup > /dev/null
+
+web=/etc/nginx/appts/$name.location
+if [ -e "$web" ]; then
+    echo "Disable Web"
+    rm -f "$web"
+    service nginx reload
+fi
+

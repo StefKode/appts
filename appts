@@ -31,7 +31,7 @@ quiet=0
 filter=""
 
 function execute {
-    ssh $connection sudo /var/lib/lxc/bin/appmgr $1 $2 $3 $4 $5
+    ssh $connection sudo /var/lib/lxc/bin/appmgr $1 $2 $3 $4 $5 $6
 }
 
 while [ "$1" != "" ];
@@ -203,7 +203,7 @@ do
             cmd="stop"
             ;;
             #--------------------------
-        #cmd/ -create /  / create app (opt: -name, -eport, -iport, -guestdir)
+        #cmd/ -create /  / create app (opt: -name, -eport, -iport, -guestdir, -web)
         "-create")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
@@ -226,6 +226,16 @@ do
                 exit 1
             fi 
             guestdir="$1"
+            ;;
+            #--------------------------
+        #opt/ -web / spec / configure reverse proxy to reach app (e.g. wiki,80,pages)
+        "-web")
+            shift
+            if [ "$1" = "" ]; then
+                echo "need web spec"
+                exit 1
+            fi 
+            webspec="$1"
             ;;
             #--------------------------
         #cmd/ -onestop / name / create if app not exist, then deploy (-dir opt: -eport -iport)

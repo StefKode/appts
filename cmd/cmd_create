@@ -20,5 +20,11 @@ fi
 if [ "$intport" = "" ]; then
     intport="none"
 fi
+if [ "$guestdir" = "" ]; then
+    guestdir="none"
+fi
+if [ "$webspec" = "" ]; then
+    webspec="none"
+fi
 echo "Create new app ($name)"
-execute create "$name" $extport $intport "$guestdir"
+execute create "$name" $extport $intport "$guestdir" "$webspec"

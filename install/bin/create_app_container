@@ -23,7 +23,17 @@ else
     intport="$1"
 fi
 shift
-guestmount="$1"
+if [ "$1" = "none" ]; then
+    guestmount=""
+else
+    guestmount="$1"
+fi
+shift
+if [ "$1" = "none" ]; then
+    webspec=""
+else
+    webspec="$1"
+fi
 appdir=$(cat - << END
 #name__mac_______________vent___vnet_ip_______guest_ip________ssh_forward
 APPTS_APP_DIRECTORY
@@ -63,6 +73,26 @@ sshforw=$(echo $nextfree | awk '{print $6}')
 #echo "router  = $router"
 #echo "guestip = $guestip"
 #echo "sshforw = $sshforw"
+
+if [ "$webspec" != "" ]; then
+    URIredir=$(echo "$webspec" | awk -F ',' '{print $1}')
+    servPort=$(echo "$webspec" | awk -F ',' '{print $2}')
+    URIdesti=$(echo "$webspec" | awk -F ',' '{print $3}')
+    IPredir=$guestip
+    if [ "$URIredir" = "" ]; then
+        echo "Error - need redirection URI"
+        exit 1
+    fi
+    if [ "$servPort" != "" ]; then
+        servPort=":$servPort"
+    fi
+    if [ "$URIdesti" != "" ]; then
+        URIdesti="${URIdesti}/"
+    fi
+    echo "Web-Access URI=$URIredir DEST_IP=$IPredir DEST_PORT=$servPort DEST_URI=$URIdesti"
+    mkdir -p /etc/nginx/appts
+    echo "location /${URIredir}/ {proxy_pass http://${IPredir}${servPort}/$URIdesti;}" > /etc/nginx/appts/$desc.location
+fi
 
 if [ "$guestmount" != "" ]; then
     echo "Guest-mount: $guestmount"
