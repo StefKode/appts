@@ -1,0 +1,24 @@
+#!/bin/bash
+###############################################################################
+# AppTheShelf
+# Elegant LXC remote container management
+#
+# Copyright:
+# Stefan Koch <stefkoch@posteo.de>
+#
+# License: GPLv3
+###############################################################################
+
+appID=$(getAppID "$name_old")
+if [ "$appID" = "" ]; then
+    echo "app not found"
+    exit 1
+fi
+
+testAppID=$(getAppID "$name_new")
+if [ "$testAppID" != "" ]; then
+    echo "cannot rename, new name already used "
+    exit 1
+fi
+echo "Set name for $appID = $name_new"
+execute setname $appID "$name_new"

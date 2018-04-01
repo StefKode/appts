@@ -75,6 +75,11 @@ if [ "$1" = "getappid" ]; then
 	exit $?
 fi
 
+if [ "$1" = "setname" ]; then
+	/var/lib/lxc/bin/setname_app_container $2 $3
+	exit $?
+fi
+
 if [ "$1" = "listfw" ]; then
 	if [ "$2" == "" ]; then
 		iptables -L -n -t nat -v

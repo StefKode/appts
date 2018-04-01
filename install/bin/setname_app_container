@@ -1,0 +1,24 @@
+#!/bin/bash 
+###############################################################################
+# AppTheShelf
+# Elegant LXC remote container management
+#
+# Copyright:
+# Stefan Koch <stefkoch@posteo.de>
+#
+# License: GPLv3
+###############################################################################
+
+
+appID="$1"
+setname="$2"
+
+cd /var/lib/lxc
+
+if [ ! -d "$appID" ]; then
+    echo "appID not found"
+    exit 1
+fi
+
+echo "$setname" > $appID/appts.name
+

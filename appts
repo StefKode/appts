@@ -305,9 +305,30 @@ do
             #--------------------------
         #cmd/ -setup /  / install or setup default settings
         "-setup")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
             user="none"
             host="none"
             cmd="setup"
+            ;;
+            #--------------------------
+        #cmd/ -rename / old new / rename app from <old> to <new>
+        "-rename")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            cmd="rename"
+            shift
+            name_old="$1"
+            shift
+            if [ "$1" = "" ]; then
+                echo "need <old> <new>"
+                exit 1
+            fi
+            name_new="$1"
             ;;
             #--------------------------
         #cmd/ -h / / print this help
