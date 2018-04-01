@@ -9,7 +9,7 @@
 # License: GPLv3
 ###############################################################################
 
-desc="$1"
+name="$1"
 shift
 if [ "$1" = "none" ]; then
     extport=""
@@ -35,7 +35,7 @@ else
     webspec="$1"
 fi
 appdir=$(cat - << END
-#name__mac_______________vent___vnet_ip_______guest_ip________ssh_forward
+#appID__mac_______________vent___vnet_ip_______guest_ip________ssh_forward
 APPTS_APP_DIRECTORY
 END
 )
@@ -59,7 +59,7 @@ if [ "$nextfree" = "" ]; then
     exit 1
 fi
 
-name=$(   echo $nextfree | awk '{print $1}')
+appID=$(   echo $nextfree | awk '{print $1}')
 mac=$(    echo $nextfree | awk '{print $2}')
 vnet=$(   echo $nextfree | awk '{print $3}')
 router=$( echo $nextfree | awk '{print $4}')
@@ -67,7 +67,7 @@ guestip=$(echo $nextfree | awk '{print $5}')
 sshforw=$(echo $nextfree | awk '{print $6}')
 
 #echo "Next-free:"
-#echo "name    = $name"
+#echo "appID    = $appID"
 #echo "mac     = $mac"
 #echo "vnet    = $vnet"
 #echo "router  = $router"
@@ -75,6 +75,7 @@ sshforw=$(echo $nextfree | awk '{print $6}')
 #echo "sshforw = $sshforw"
 
 if [ "$webspec" != "" ]; then
+    echo "$webspec" >  $appID/appts.options.web
     URIredir=$(echo "$webspec" | awk -F ',' '{print $1}')
     servPort=$(echo "$webspec" | awk -F ',' '{print $2}')
     URIdesti=$(echo "$webspec" | awk -F ',' '{print $3}')
@@ -91,25 +92,26 @@ if [ "$webspec" != "" ]; then
     fi
     echo "Web-Access URI=$URIredir DEST_IP=$IPredir DEST_PORT=$servPort DEST_URI=$URIdesti"
     mkdir -p /etc/nginx/appts
-    echo "location /${URIredir}/ {proxy_pass http://${IPredir}${servPort}/$URIdesti;}" > /etc/nginx/appts/$desc.location
+    echo "location /${URIredir}/ {proxy_pass http://${IPredir}${servPort}/$URIdesti;}" > /etc/nginx/appts/$name.location
 fi
 
 if [ "$guestmount" != "" ]; then
+    echo "$guestmount" >  $appID/appts.options.guestmount
     echo "Guest-mount: $guestmount"
     guestmount="lxc.mount.entry = $guestmount guest none ro,bind,create=dir 0 0"
-    mkdir -p $name/rootfs/guest
+    mkdir -p $appID/rootfs/guest
 fi
 
 #create
-mkdir -p $name
-touch $name/is_appts
-cat - > $name/config << END
+mkdir -p $appID
+touch $appID/is_appts
+cat - > $appID/config << END
 lxc.start.auto = 1
 lxc.start.delay = 5
 lxc.hook.pre-start = /var/lib/lxc/bin/overlayup   \$LXC_NAME
 lxc.hook.post-stop = /var/lib/lxc/bin/overlaydown \$LXC_NAME
 lxc.network.type = veth
-lxc.network.script.up = /var/lib/lxc/$name/vnetup
+lxc.network.script.up = /var/lib/lxc/$appID/vnetup
 lxc.network.hwaddr = $mac
 lxc.network.ipv4.gateway = $router
 lxc.network.ipv4 = $guestip/24
@@ -117,20 +119,20 @@ lxc.network.veth.pair = $vnet
 lxc.network.name = $vnet
 lxc.network.flags = up
 lxc.start.auto = 1
-lxc.rootfs = /var/lib/lxc/$name/rootfs
+lxc.rootfs = /var/lib/lxc/$appID/rootfs
 lxc.include = /usr/share/lxc/config/debian.common.conf
-lxc.mount = /var/lib/lxc/$name/fstab
+lxc.mount = /var/lib/lxc/$appID/fstab
 $guestmount
-lxc.utsname = $name
+lxc.utsname = $appID
 lxc.arch = armhf
 lxc.autodev = 1
 lxc.kmsg = 0
 END
-touch $name/fstab
-undername=$(echo $name | sed -e 's/-/_/')
+touch $appID/fstab
+undername=$(echo $appID | sed -e 's/-/_/')
 if [ "$intport" == "" ]; then 
 #-------------------------------------------
-cat - > $name/fw_setup.inc << END
+cat - > $appID/fw_setup.inc << END
 function connect_$undername {
         IP=\$1
         connect_port $sshforw 22 \$IP tcp
@@ -139,7 +141,8 @@ connect_$undername $guestip
 END
 #-------------------------------------------
 else
-cat - > $name/fw_setup.inc << END
+echo "$extport->$intport" >  $appID/appts.options.portfw
+cat - > $appID/fw_setup.inc << END
 function connect_$undername {
         IP=\$1
         connect_port $sshforw 22 \$IP tcp
@@ -149,21 +152,21 @@ connect_$undername $guestip
 END
 fi
 #-------------------------------------------
-cat - > $name/vnetup << END
+cat - > $appID/vnetup << END
 ifconfig $vnet $router
 END
-mkdir -p $name/rootfs/etc
-cat - > $name/rootfs/etc/hosts << END
+mkdir -p $appID/rootfs/etc
+cat - > $appID/rootfs/etc/hosts << END
 127.0.0.1	localhost
 ::1		localhost ip6-localhost ip6-loopback
 ff02::1		ip6-allnodes
 ff02::2		ip6-allrouters
 $guestip $name
 END
-echo "$name" > $name/rootfs/etc/hostname
-echo "$desc" > $name/appts.name
-chmod +x $name/vnetup
-lxc-start -n $name -d
+echo "$name" > $appID/rootfs/etc/hostname
+echo "$name" > $appID/appts.name
+chmod +x $appID/vnetup
+lxc-start -n $appID -d
 bin/fw-setup > /dev/null
 
 echo "status=OK name=$name ssh=$sshforw"

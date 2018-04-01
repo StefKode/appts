@@ -9,15 +9,26 @@
 # License: GPLv3
 ###############################################################################
 
-
-echo "APP-ID     | APP-NAME             | STATE"
-echo "-----------+----------------------+-----------"
 cd /var/lib/lxc
+
+function appts_opts() {
+	appID=$1
+	list=$(ls -1 $appID/appts.options* | while read line;
+	do
+		echo -n "$(echo $line | sed -e 's/^.*options.//'),"
+	done 2> /dev/null)
+	echo "${list::-1}"
+}
+
+echo "APP-ID     | APP-NAME             | STATE    | OPTIONS"
+echo "-----------+----------------------+----------+------------------------"
 (ls -1 */is_appts 2> /dev/null) | sed -e 's/\/.*$//' | while read line;
 do
+	options="$(appts_opts $line)"
 	printf "%-10s | " "$line" 
 	printf "%-20s | " "$(cat $line/appts.name)"
-	printf "%-8s " $(lxc-info -s -n $line | awk '{print $2}')
+	printf "%-8s | " $(lxc-info -s -n $line | awk '{print $2}')
+	printf "%-8s " "$options"
 	echo ""
 done 2> /dev/null
 
