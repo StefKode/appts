@@ -11,9 +11,19 @@
 
 desc="$1"
 shift
-extport="$1"
+if [ "$1" = "none" ]; then
+    extport=""
+else
+    extport="$1"
+fi
 shift
-intport="$1"
+if [ "$1" = "none" ]; then
+    intport=""
+else
+    intport="$1"
+fi
+shift
+guestmount="$1"
 appdir=$(cat - << END
 #name__mac_______________vent___vnet_ip_______guest_ip________ssh_forward
 APPTS_APP_DIRECTORY
@@ -54,6 +64,12 @@ sshforw=$(echo $nextfree | awk '{print $6}')
 #echo "guestip = $guestip"
 #echo "sshforw = $sshforw"
 
+if [ "$guestmount" != "" ]; then
+    echo "Guest-mount: $guestmount"
+    guestmount="lxc.mount.entry = $guestmount guest none ro,bind,create=dir 0 0"
+    mkdir -p $name/rootfs/guest
+fi
+
 #create
 mkdir -p $name
 touch $name/is_appts
@@ -74,6 +90,7 @@ lxc.start.auto = 1
 lxc.rootfs = /var/lib/lxc/$name/rootfs
 lxc.include = /usr/share/lxc/config/debian.common.conf
 lxc.mount = /var/lib/lxc/$name/fstab
+$guestmount
 lxc.utsname = $name
 lxc.arch = armhf
 lxc.autodev = 1

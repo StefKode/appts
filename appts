@@ -203,7 +203,7 @@ do
             cmd="stop"
             ;;
             #--------------------------
-        #cmd/ -create /  / create app (opt: -name, -eport, -iport)
+        #cmd/ -create /  / create app (opt: -name, -eport, -iport, -guestdir)
         "-create")
             if [ $n -ne 0 ]; then
                 echo "$1 is a command and must be used at first place"
@@ -216,6 +216,16 @@ do
             fi 
             cmd="create"
             name="$1"
+            ;;
+            #--------------------------
+        #opt/ -guestdir / guest_dir / allow app to read <guest_dir> under /guest
+        "-guestdir")
+            shift
+            if [ "$1" = "" ]; then
+                echo "need dir"
+                exit 1
+            fi 
+            guestdir="$1"
             ;;
             #--------------------------
         #cmd/ -onestop / name / create if app not exist, then deploy (-dir opt: -eport -iport)

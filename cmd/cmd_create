@@ -14,5 +14,11 @@ if [ "$appID" != "" ]; then
     echo "name already used"
     exit 1
 fi
+if [ "$extport" = "" ]; then
+    extport="none"
+fi
+if [ "$intport" = "" ]; then
+    intport="none"
+fi
 echo "Create new app ($name)"
-execute create $name $extport $intport
+execute create "$name" $extport $intport "$guestdir"
