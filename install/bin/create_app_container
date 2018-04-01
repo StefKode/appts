@@ -93,6 +93,7 @@ if [ "$webspec" != "" ]; then
     echo "Web-Access URI=$URIredir DEST_IP=$IPredir DEST_PORT=$servPort DEST_URI=$URIdesti"
     mkdir -p /etc/nginx/appts
     echo "location /${URIredir}/ {proxy_pass http://${IPredir}${servPort}/$URIdesti;}" > /etc/nginx/appts/$name.location
+    service nginx reload
 fi
 
 if [ "$guestmount" != "" ]; then
