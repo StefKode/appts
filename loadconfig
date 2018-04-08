@@ -9,9 +9,21 @@
 # License: GPLv3
 ###############################################################################
 
+avail_profiles=""
+profile="default"
+
 while read line;
 do
-    varnm=$(echo "$line" | awk -F= '{print $1}')
-    value=$(echo "$line" | awk -F= '{print $2}')
+    new_profile=$(echo "$line" | grep '^\[' | sed -e 's/^\[//' -e 's/\]$//')
+
+    if [ "$new_profile" != "" ]; then
+        profile="$new_profile"
+        avail_profiles="$avail_profiles $profile"
+        continue
+    fi
+
+    varnm="${profile}_$(echo $line | awk -F= '{print $1}')"
+    value="$(echo $line | awk -F= '{print $2}')"
+    #echo "$varnm=$value"
     eval "$varnm=$value"
-done< <(cat "$rc" | grep -v -e '^#' -e '^$' -e '(' -e ')' -e '`' -e '\[')
+done< <(cat "$rc" | grep -v -e '^#' -e '^$' -e '(' -e ')' -e '`')

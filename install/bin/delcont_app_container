@@ -10,23 +10,23 @@
 ###############################################################################
 
 
-name="$1"
+appID="$1"
 
 testName="$(echo $name | grep '^app-[0-9]*$')"
 
 cd /var/lib/lxc
 
-if [ ! -d "$name" ]; then
-	echo "App $name does not exist"
+if [ ! -d "$appID" ]; then
+	echo "App $appID does not exist"
 	exit 1
 fi
 
 if [ "$testName" = "" ]; then
-	echo "App $name cannot be deleted"
+	echo "App $appID cannot be deleted"
 	exit 1
 fi
 
-cd $name/rootfs/home/app
+cd $appID/rootfs/home/app
 if [ $? -eq 0 ]; then
 	rm -rf code 
 	mkdir -p code

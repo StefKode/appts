@@ -25,6 +25,11 @@ hint=""
 listarchive=""
 ahost=""
 n=0
+
+eval "user=\$${default_default}_user"
+eval "host=\$${default_default}_host"
+eval "colorize=\$${default_default}_colorize"
+
 connection="$user@$host"
 host="$(echo $connection | sed -e 's/^.*@//')"
 quiet=0
@@ -37,21 +42,31 @@ function execute {
 while [ "$1" != "" ];
 do
     case "$1" in
-        #opt/ -con / user@host / use specified connection insted of default
-        "-con")
+        #opt/ -p / name / profile name to use other than default (edit .apptsrc to specify)
+        "-p")
             if [ $n -ne 0 ]; then
-                echo "$1 is a command and must be used at first place"
+                echo "this option must be used at first place"
                 exit 1
             fi
             shift
             if [ "$1" = "" ]; then
-                echo "need connection"
+                echo "need profile name"
                 exit 1
             fi
-            connection="$1"
-            host="$(echo $connection | sed -e 's/^.*@//')"
-            user="$(echo $connection | sed -e 's/@.*$//')"
+            used_profile="$1"
+            eval "user=\$${used_profile}_user"
+            eval "host=\$${used_profile}_host"
+            eval "colorize=\$${used_profile}_colorize"
+            connection="$user@$host"
             n=-1
+            ;;
+            #--------------------------
+        "-list-profiles")
+            if [ $n -ne 0 ]; then
+                echo "$1 is a command and must be used at first place"
+                exit 1
+            fi
+            cmd="availprofile"
             ;;
             #--------------------------
         #opt/ -dir / directory / deploy from specified directory

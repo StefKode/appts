@@ -9,5 +9,8 @@
        - python-dev
        - iptables
        - nginx 
+       - binutils
+       - make
+       - gcc
        APPTS_LXC_DEV
 
