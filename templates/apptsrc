@@ -1,5 +1,10 @@
 # AppTheShelf Default settings
 
+default=foo
+
+#profile foo
+
+[foo]
 #user for container
 user=app
 
@@ -8,3 +13,16 @@ host=<FILL-IN>
 
 #color status in listings
 colorize=true
+
+#profile bar
+[bar]
+
+#user for container
+user=bapp
+
+#host name/address of guest
+host=<FILL-IN>
+
+#color status in listings
+colorize=false
+

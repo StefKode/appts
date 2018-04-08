@@ -1,0 +1,11 @@
+#!/bin/bash
+
+
+echo "Available Profiles:"
+
+for prof in $avail_profiles;
+do
+    eval "user=\$${prof}_user"
+    eval "host=\$${prof}_host"
+    echo " [$prof]  -  $user@$host"
+done
