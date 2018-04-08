@@ -22,21 +22,28 @@ if [ "$appID" = "" ]; then
     echo "app not found"
     exit 1
 fi
-echo "delete.."
+echo "Stop app.."
+execute stop $appID
+echo "delete code.."
 execute delete-app-contents $appID
+echo "Start app.."
+execute start $appID
+sleep 5
 port="$(execute getport $appID)"
-echo "use port $port"
+echo "Copy code, use port $port"
 cd "$dir"
 scp -P $port -r * app@$host:code
 
 if [ -e deploy.hook ]; then
     cat deploy.hook | while read line;
     do
+        echo "additional deployment: $line"
         src=$(echo $line | awk '{print $1}')
         dst=$(echo $line | awk '{print $2}')
         scp -P $port "$src" app@$host:"$dst"
     done
 fi
 
+echo "Restart app.."
 execute restart $appID
 echo "done"

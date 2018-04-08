@@ -30,7 +30,7 @@ cd $name/rootfs/home/app
 if [ $? -eq 0 ]; then
 	rm -rf code 
 	mkdir -p code
-	chown pi.pi code
+	chown 1000.1000 code
 else
 	echo "error"
 fi

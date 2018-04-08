@@ -1,3 +1,5 @@
    - name: "Install tools"
      apt: name={{item}} state=installed update_cache=false
      with_items:
+        - sudo
+        - vim
