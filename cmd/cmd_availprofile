@@ -2,6 +2,7 @@
 
 
 echo "Available Profiles:"
+echo ""
 
 for prof in $avail_profiles;
 do
@@ -9,3 +10,5 @@ do
     eval "host=\$${prof}_host"
     echo " [$prof]  -  $user@$host"
 done
+echo ""
+echo " Default Profile: $default_default"
