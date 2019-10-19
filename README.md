@@ -6,4 +6,3 @@ readme is currently worked on... stay tuned
 
 
 Stefan
-stefkoch@posteo.de
